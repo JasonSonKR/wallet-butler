@@ -16,7 +16,7 @@ const ASSET_COLORS = [
 ];
 
 export const AssetView = () => {
-  const { assets, getTotalAssets, addAsset, deleteAsset } = useStore();
+  const { assets, transactions, getTotalAssets, addAsset, deleteAsset } = useStore();
   const [isAdding, setIsAdding] = useState(false);
   const [newAsset, setNewAsset] = useState({ name: '', category: 'CASH' as AssetCategory, balance: '', color: ASSET_COLORS[0] });
 

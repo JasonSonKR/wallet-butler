@@ -80,7 +80,20 @@ export const useStore = create<State>()(
       }),
 
       getTotalAssets: () => {
-        return get().assets.reduce((acc, cur) => acc + cur.balance, 0);
+        const { assets, transactions } = get();
+        const today = new Date().toISOString().slice(0, 10);
+
+        const assetsTotal = assets.reduce((acc, cur) => acc + cur.balance, 0);
+
+        const transactionsTotal = transactions
+          .filter(t => t.date <= today)
+          .reduce((acc, t) => {
+            if (t.type === 'INCOME') return acc + t.amount;
+            if (t.type === 'EXPENSE') return acc - t.amount;
+            return acc;
+          }, 0);
+
+        return assetsTotal + transactionsTotal;
       },
 
       getImpulseRatio: () => {
