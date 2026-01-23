@@ -1,4 +1,3 @@
-import React from 'react';
 import { TrendingUp, TrendingDown, Ghost, Repeat, Pencil, Trash2, CalendarClock } from 'lucide-react';
 import { clsx } from 'clsx';
 import { formatCurrency } from '../lib/utils';
