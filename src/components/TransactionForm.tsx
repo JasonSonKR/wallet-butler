@@ -65,7 +65,7 @@ export function TransactionForm({ isOpen, onClose, selectedDate, initialValues }
       setEditingId(initialValues.id);
       setAmount(initialValues.amount ? initialValues.amount.toLocaleString() : '');
       setDesc(initialValues.description || '');
-      setType(initialValues.type || 'expense');
+      setType(((initialValues.type || 'expense') as string).toLowerCase() as 'income' | 'expense');
       setCategory(initialValues.category || '식비');
       setIsPlanned(initialValues.isPlanned || false);
       setAllocation(initialValues.allocation || 'LIVING');

@@ -22,7 +22,7 @@ const getIcon = (category: string) => {
 };
 
 export const TransactionItem: React.FC<Props> = ({ transaction, onDelete }) => {
-  const isIncome = transaction.type === 'income';
+  const isIncome = transaction.type === 'INCOME' || transaction.type === 'income';
 
   return (
     <div className="group flex items-center justify-between p-4 bg-white rounded-2xl shadow-sm border border-lovely-100 hover:shadow-md transition-all duration-300 mb-3">

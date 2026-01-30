@@ -23,6 +23,7 @@ export function TransactionList({ transactions, onBudgetClick, onRemove, onEdit 
     <div className="space-y-3">
       {transactions.map((t) => {
         const isBudget = (t.budgetAmount ?? 0) > 0 && t.amount === 0;
+        const isIncome = t.type === 'INCOME' || t.type === 'income';
         return (
           <div 
             key={t.id} 
@@ -50,9 +51,9 @@ export function TransactionList({ transactions, onBudgetClick, onRemove, onEdit 
                 "p-3 rounded-xl flex items-center justify-center relative",
                 isBudget 
                   ? "bg-[#E0F0E9] text-[#5D9C79]"
-                  : (t.type === 'income' ? "bg-[#F0EBF7] text-[#8E7CC3]" : "bg-lovely-100 text-lovely-500")
+                  : (isIncome ? "bg-[#F0EBF7] text-[#8E7CC3]" : "bg-lovely-100 text-lovely-500")
               )}>
-                {t.type === 'income' ? <TrendingUp size={18} /> : (isBudget ? <CalendarClock size={18} /> : <TrendingDown size={18} />)}
+                {isIncome ? <TrendingUp size={18} /> : (isBudget ? <CalendarClock size={18} /> : <TrendingDown size={18} />)}
                 {t.isImpulse && (
                   <div className="absolute -top-1 -right-1 bg-red-400 text-white p-0.5 rounded-full">
                     <Ghost size={8} />
@@ -79,9 +80,9 @@ export function TransactionList({ transactions, onBudgetClick, onRemove, onEdit 
               <div className="text-right pointer-events-none">
                 <p className={clsx(
                   "font-bold",
-                  isBudget ? "text-[#4B8565]" : (t.type === 'income' ? "text-[#8E7CC3]" : "text-lovely-500")
+                  isBudget ? "text-[#4B8565]" : (isIncome ? "text-[#8E7CC3]" : "text-lovely-500")
                 )}>
-                  {t.type === 'income' ? '+' : ''}{formatCurrency(t.amount || t.budgetAmount || 0)}
+                  {isIncome ? '+' : ''}{formatCurrency(t.amount || t.budgetAmount || 0)}
                 </p>
               </div>
               

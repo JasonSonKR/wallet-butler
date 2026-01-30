@@ -1,4 +1,4 @@
-export type AssetCategory = 'REAL_ESTATE' | 'FINANCE' | 'CASH';
+export type AssetCategory = 'REAL_ESTATE' | 'FINANCE' | 'CASH' | 'LOAN';
 export type AllocationType = 'INVEST_STABLE' | 'INVEST_RISK' | 'LIVING' | 'EVENT';
 export type TransactionType = 'INCOME' | 'EXPENSE';
 
@@ -11,12 +11,20 @@ export interface RecurrenceRule {
   weekNumbers?: number[]; // 매월 선택 시 (1, 2, 3, 4, 5주차)
 }
 
+export interface LoanDetails {
+  interestRate: string; // 연 이자율 (%)
+  duration: string; // 대출 기간 (개월)
+  gracePeriod: string; // 거치 기간 (개월)
+  method: 'EQUAL_PRINCIPAL' | 'EQUAL_PAYMENT' | 'BULK'; // 상환 방식
+}
+
 export interface Asset {
   id: string;
   name: string;
   category: AssetCategory;
   balance: number;
   color: string;
+  loanDetails?: LoanDetails;
 }
 
 export interface Transaction {
@@ -34,8 +42,9 @@ export interface Transaction {
 
 export const ASSET_CATEGORY_LABELS: Record<AssetCategory, string> = {
   REAL_ESTATE: '부동산',
-  FINANCE: '금융자산',
-  CASH: '현금/예금',
+  FINANCE: '예적금/투자',
+  CASH: '현금',
+  LOAN: '대출/부채',
 };
 
 export const ALLOCATION_LABELS: Record<AllocationType, string> = {

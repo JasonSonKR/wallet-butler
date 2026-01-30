@@ -1,8 +1,10 @@
 import { useState, useMemo } from 'react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, AreaChart, Area } from 'recharts';
 import { useStore } from '../store/useStore';
 import { formatCurrency } from '../lib/utils';
 import { ImpulseCharacter } from './ImpulseCharacter';
+import { subMonths, format, addMonths, subYears, addYears } from 'date-fns';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 const COLORS = ['#FF8042', '#00C49F', '#FFBB28', '#0088FE', '#8884d8', '#FF8042'];
 
@@ -23,8 +25,8 @@ const NATURE_COLORS: Record<string, string> = {
 export const AnalysisView = () => {
   const { transactions } = useStore();
   const [viewMode, setViewMode] = useState<'MONTH' | 'YEAR'>('MONTH');
-  
-  const currentDate = new Date();
+  const [currentDate, setCurrentDate] = useState(new Date());
+
   // toISOString()은 UTC 기준이므로 로컬 날짜 문자열 사용
   const localYear = currentDate.getFullYear();
   const localMonth = String(currentDate.getMonth() + 1).padStart(2, '0');
@@ -32,6 +34,22 @@ export const AnalysisView = () => {
   const currentKey = viewMode === 'MONTH' 
     ? `${localYear}-${localMonth}`
     : `${localYear}`;
+
+  const handlePrev = () => {
+    if (viewMode === 'MONTH') {
+      setCurrentDate(prev => subMonths(prev, 1));
+    } else {
+      setCurrentDate(prev => subYears(prev, 1));
+    }
+  };
+
+  const handleNext = () => {
+    if (viewMode === 'MONTH') {
+      setCurrentDate(prev => addMonths(prev, 1));
+    } else {
+      setCurrentDate(prev => addYears(prev, 1));
+    }
+  };
 
   // 데이터 필터링 및 가공
   const stats = useMemo(() => {
@@ -79,32 +97,84 @@ export const AnalysisView = () => {
     return { total, natureData, categoryData };
   }, [transactions, currentKey]);
 
+  // 3. 지출 추이 데이터 (Trend)
+  const trendData = useMemo(() => {
+    const data = [];
+
+    if (viewMode === 'MONTH') {
+      // 월간 모드: 선택된 달 기준 최근 6개월
+      for (let i = 5; i >= 0; i--) {
+        const targetDate = subMonths(currentDate, i);
+        const monthKey = format(targetDate, 'yyyy-MM');
+        const monthLabel = format(targetDate, 'M월');
+        
+        const monthlySum = transactions
+          .filter(t => t.date.startsWith(monthKey) && (t.type === 'EXPENSE' || t.type === 'expense'))
+          .reduce((acc, t) => acc + t.amount, 0);
+
+        data.push({
+          name: monthLabel,
+          amount: monthlySum,
+          fullDate: monthKey
+        });
+      }
+    } else {
+      // 연간 모드: 해당 연도 1월 ~ 12월
+      const year = currentDate.getFullYear();
+      for (let i = 0; i < 12; i++) {
+        const targetDate = new Date(year, i, 1);
+        const monthKey = format(targetDate, 'yyyy-MM');
+        const monthLabel = format(targetDate, 'M월');
+
+        const monthlySum = transactions
+          .filter(t => t.date.startsWith(monthKey) && (t.type === 'EXPENSE' || t.type === 'expense'))
+          .reduce((acc, t) => acc + t.amount, 0);
+
+        data.push({
+          name: monthLabel,
+          amount: monthlySum,
+          fullDate: monthKey
+        });
+      }
+    }
+    return data;
+  }, [transactions, currentDate, viewMode]);
+
   return (
     <div className="space-y-6 pb-24 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Header Card */}
-      <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-lovely-100">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-extrabold text-gray-800">
-            {viewMode === 'MONTH' ? `${currentDate.getMonth() + 1}월` : `${currentDate.getFullYear()}년`} 분석
-          </h2>
-          <div className="bg-gray-100 p-1 rounded-xl flex text-xs font-bold">
+      <div className="bg-white rounded-[2rem] p-5 shadow-sm border border-lovely-100">
+        <div className="flex justify-between items-center mb-2">
+          <div className="flex items-center gap-2">
+            <button onClick={handlePrev} className="p-1 hover:bg-gray-100 rounded-full text-gray-400 transition-colors">
+              <ChevronLeft size={20} />
+            </button>
+            <h2 className="text-lg font-extrabold text-gray-800">
+              {viewMode === 'MONTH' ? `${currentDate.getMonth() + 1}월` : `${currentDate.getFullYear()}년`} 분석
+            </h2>
+            <button onClick={handleNext} className="p-1 hover:bg-gray-100 rounded-full text-gray-400 transition-colors">
+              <ChevronRight size={20} />
+            </button>
+          </div>
+          
+          <div className="bg-gray-100 p-1 rounded-xl flex text-[10px] font-bold">
             <button 
               onClick={() => setViewMode('MONTH')}
-              className={`px-3 py-1.5 rounded-lg transition-all ${viewMode === 'MONTH' ? 'bg-white shadow-sm text-gray-800' : 'text-gray-400'}`}
+              className={`px-2.5 py-1 rounded-lg transition-all ${viewMode === 'MONTH' ? 'bg-white shadow-sm text-gray-800' : 'text-gray-400'}`}
             >
               월간
             </button>
             <button 
               onClick={() => setViewMode('YEAR')}
-              className={`px-3 py-1.5 rounded-lg transition-all ${viewMode === 'YEAR' ? 'bg-white shadow-sm text-gray-800' : 'text-gray-400'}`}
+              className={`px-2.5 py-1 rounded-lg transition-all ${viewMode === 'YEAR' ? 'bg-white shadow-sm text-gray-800' : 'text-gray-400'}`}
             >
               연간
             </button>
           </div>
         </div>
         <div className="text-center py-2">
-          <p className="text-gray-400 text-sm mb-1">총 지출</p>
-          <p className="text-3xl font-bold text-gray-800 tracking-tight">{formatCurrency(stats.total)}원</p>
+          <p className="text-gray-400 text-xs mb-1">총 지출</p>
+          <p className="text-2xl font-bold text-gray-800 tracking-tight">{formatCurrency(stats.total)}원</p>
         </div>
       </div>
 
@@ -218,6 +288,54 @@ export const AnalysisView = () => {
             데이터가 쌓이면 랭킹을 보여드릴게요!
           </div>
         )}
+      </div>
+
+      {/* 3. 월별 지출 추이 (Trend) - Moved to Bottom */}
+      <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-lovely-50">
+        <h3 className="font-bold text-gray-800 mb-6 flex items-center gap-2">
+          <span className="w-1 h-4 bg-blue-400 rounded-full"/>
+          {viewMode === 'MONTH' ? '최근 6개월 지출 흐름' : `${currentDate.getFullYear()}년 월별 지출`}
+        </h3>
+        <div className="h-[200px] w-full -ml-2">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={trendData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+              <defs>
+                <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#60A5FA" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="#60A5FA" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+              <XAxis 
+                dataKey="name" 
+                tick={{ fontSize: 11, fill: '#94A3B8' }} 
+                axisLine={false}
+                tickLine={false}
+                dy={10}
+              />
+              <YAxis 
+                tick={{ fontSize: 10, fill: '#94A3B8' }} 
+                axisLine={false}
+                tickLine={false}
+                tickFormatter={(value) => `${(value / 10000).toFixed(0)}만`}
+                width={35}
+              />
+              <Tooltip 
+                cursor={{ stroke: '#60A5FA', strokeWidth: 1, strokeDasharray: '3 3' }}
+                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                formatter={(value: number) => [`${formatCurrency(value)}원`, '지출']}
+              />
+              <Area 
+                type="monotone" 
+                dataKey="amount" 
+                stroke="#60A5FA" 
+                strokeWidth={3}
+                fillOpacity={1} 
+                fill="url(#colorAmount)" 
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
       </div>
     </div>
   );
