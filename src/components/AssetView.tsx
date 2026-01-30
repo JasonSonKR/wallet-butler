@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useStore } from '../store/useStore';
 import { formatCurrency, cn, numberToKorean } from '../lib/utils';
 import { Asset, AssetCategory, LoanDetails, ASSET_CATEGORY_LABELS } from '../types/ledger';

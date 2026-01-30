@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, CalendarClock, CheckCircle2, Ghost, CalendarDays, Gift } from 'lucide-react';
 import { clsx } from 'clsx';
 import { numberToKorean, INCOME_CATEGORIES, FREQUENCY_LABELS } from '../lib/utils';
-import { AllocationType, RecurrenceFrequency } from '../types/ledger';
+import { AllocationType, RecurrenceFrequency, TransactionType } from '../types/ledger';
 import { useStore } from '../store/useStore';
 import { generateRecurringTransactions } from '../lib/recurrence';
 
@@ -116,7 +116,7 @@ export function TransactionForm({ isOpen, onClose, selectedDate, initialValues }
     const baseTransaction = {
       amount: isPlanned ? 0 : numericAmount, // [수정] 계획일 경우 실제 지출액은 0으로 저장
       description: desc,
-      type: type.toUpperCase() as any,
+      type: type.toUpperCase() as TransactionType,
       category: category,
       date: selectedDate,
       allocationType: finalAllocation,
