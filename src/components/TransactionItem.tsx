@@ -1,5 +1,6 @@
 import React from 'react';
 import { Transaction } from '../types/ledger';
+import { isIncome as isIncomeTransaction } from '../lib/utils';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { Coffee, ShoppingBag, Home, DollarSign, Utensils, Heart } from 'lucide-react';
@@ -22,7 +23,7 @@ const getIcon = (category: string) => {
 };
 
 export const TransactionItem: React.FC<Props> = ({ transaction, onDelete }) => {
-  const isIncome = transaction.type === 'INCOME' || transaction.type === 'income';
+  const isIncome = isIncomeTransaction(transaction);
 
   return (
     <div className="group flex items-center justify-between p-4 bg-white rounded-2xl shadow-sm border border-lovely-100 hover:shadow-md transition-all duration-300 mb-3">

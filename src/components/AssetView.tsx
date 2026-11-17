@@ -168,22 +168,26 @@ export const AssetView = () => {
         <p className="text-gray-400 text-sm font-medium mb-2">나의 순자산 (자산 - 부채)</p>
         <h2 className="text-3xl font-bold tracking-tight mb-6">{formatCurrency(netWorth)}원</h2>
         
-        <div className="grid grid-cols-4 gap-2">
+        <div className="grid grid-cols-2 gap-2">
           {(Object.keys(ASSET_CATEGORY_LABELS) as AssetCategory[]).map(cat => {
             const catTotal = assets
               .filter(a => a.category === cat)
               .reduce((acc, c) => acc + c.balance, 0);
+            const isLoan = cat === 'LOAN';
             
             return (
               <div key={cat} className={cn(
-                "rounded-2xl p-2 border text-center backdrop-blur-sm",
-                cat === 'LOAN' ? "bg-red-500/10 border-red-500/20" : "bg-white/5 border-white/5"
+                "min-w-0 rounded-2xl px-3 py-2.5 border text-left backdrop-blur-sm",
+                isLoan ? "bg-red-500/10 border-red-500/20" : "bg-white/5 border-white/5"
               )}>
-                <p className={cn("text-[10px] mb-1", cat === 'LOAN' ? "text-red-300" : "text-gray-400")}>
+                <p className={cn("text-[10px] font-medium mb-0.5 whitespace-nowrap", isLoan ? "text-red-300" : "text-gray-400")}>
                   {ASSET_CATEGORY_LABELS[cat]}
                 </p>
-                <p className={cn("font-bold text-xs", cat === 'LOAN' ? "text-red-200" : "text-white")}>
-                  {cat === 'LOAN' ? '-' : ''}{formatCurrency(catTotal)}
+                <p className={cn(
+                  "font-bold text-[13px] leading-tight tabular-nums whitespace-nowrap tracking-tight",
+                  isLoan ? "text-red-200" : "text-white"
+                )}>
+                  {isLoan && catTotal > 0 ? '-' : ''}{formatCurrency(catTotal)}
                 </p>
               </div>
             );

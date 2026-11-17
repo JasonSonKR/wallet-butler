@@ -56,7 +56,6 @@ export const BudgetView: React.FC<BudgetViewProps> = ({
   // 주차 계산 헬퍼 함수
   const getWeekOfMonth = (dateStr: string) => {
     const [y, m, d] = dateStr.split('-').map(Number);
-    const date = new Date(y, m - 1, d);
     const firstDay = new Date(y, m - 1, 1);
     const dayOfWeek = firstDay.getDay();
     return Math.ceil((d + dayOfWeek) / 7);

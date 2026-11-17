@@ -1,8 +1,22 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import type { Transaction, TransactionType } from "../types/ledger";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
+}
+
+// 예전 버전에서 소문자로 저장된 데이터도 안전하게 읽기 위한 정규화
+export function normalizeTransactionType(type: string): TransactionType {
+  return String(type).toUpperCase() === 'INCOME' ? 'INCOME' : 'EXPENSE';
+}
+
+export function isIncome(transaction: Pick<Transaction, 'type'>): boolean {
+  return transaction.type === 'INCOME';
+}
+
+export function isExpense(transaction: Pick<Transaction, 'type'>): boolean {
+  return transaction.type === 'EXPENSE';
 }
 
 export function formatCurrency(amount: number): string {

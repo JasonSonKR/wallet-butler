@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useStore } from './store/useStore';
 import { BottomNav } from './components/BottomNav';
 import { CalendarView } from './components/CalendarView';
@@ -8,7 +8,7 @@ import { BudgetView } from './components/BudgetView';
 import { SettingsView } from './components/SettingsView';
 import { TransactionList } from './components/TransactionList';
 import { TransactionForm, TransactionFormInitialValues } from './components/TransactionForm';
-import { Wallet, CalendarClock, TrendingDown, TrendingUp } from 'lucide-react';
+import { CalendarClock, TrendingDown, TrendingUp } from 'lucide-react';
 import { Transaction } from './types/ledger';
 import { HOLIDAYS } from './lib/holidays';
 
@@ -23,7 +23,7 @@ function App() {
   // Form Initial Values
   const [formInitialValues, setFormInitialValues] = useState<TransactionFormInitialValues>({});
 
-  const { transactions, removeTransaction, updateTransaction } = useStore();
+  const { transactions, removeTransaction } = useStore();
 
   const filteredTransactions = selectedDate ? transactions.filter(t => t.date.startsWith(selectedDate)) : [];
 

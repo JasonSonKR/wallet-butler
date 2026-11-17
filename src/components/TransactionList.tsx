@@ -1,6 +1,6 @@
 import { TrendingUp, TrendingDown, Ghost, Repeat, Pencil, Trash2, CalendarClock } from 'lucide-react';
 import { clsx } from 'clsx';
-import { formatCurrency } from '../lib/utils';
+import { formatCurrency, isIncome as isIncomeTransaction } from '../lib/utils';
 import { Transaction } from '../types/ledger';
 
 interface TransactionListProps {
@@ -23,7 +23,7 @@ export function TransactionList({ transactions, onBudgetClick, onRemove, onEdit 
     <div className="space-y-3">
       {transactions.map((t) => {
         const isBudget = (t.budgetAmount ?? 0) > 0 && t.amount === 0;
-        const isIncome = t.type === 'INCOME' || t.type === 'income';
+        const isIncome = isIncomeTransaction(t);
         return (
           <div 
             key={t.id} 

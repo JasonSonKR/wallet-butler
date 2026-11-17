@@ -134,9 +134,9 @@ export const SettingsView = () => {
         </button>
       </div>
       
-      <div className="text-center text-xs text-gray-300 py-4">
-        <p>Wallet Butler v1.0</p>
-        <p>Local Storage Persistence Enabled</p>
+      <div className="text-center text-xs text-gray-300 py-4 space-y-1">
+        <p className="font-bold text-gray-400">🌸 Lovely Ledger</p>
+        <p>모든 기록은 이 기기 브라우저에만 저장돼요</p>
       </div>
     </div>
   );

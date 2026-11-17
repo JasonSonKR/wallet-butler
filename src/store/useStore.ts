@@ -1,6 +1,11 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { Asset, Transaction } from '../types/ledger';
+import { normalizeTransactionType } from '../lib/utils';
+
+// 예전 백업/저장소에 소문자('income' | 'expense')로 남아 있는 타입을 대문자 정본으로 맞춘다
+export const normalizeTransactions = (transactions: Transaction[]): Transaction[] =>
+  transactions.map((t) => ({ ...t, type: normalizeTransactionType(t.type) }));
 
   interface State {
   assets: Asset[];
@@ -16,7 +21,7 @@ import { Asset, Transaction } from '../types/ledger';
   
   // Getters
   getTotalAssets: () => number;
-  getImpulseRatio: () => number; // 전체 지출 중 돌발 비용 비율
+  getImpulseRatio: (periodPrefix?: string) => number; // 해당 기간 지출 중 돌발 비용 비율 (기간 생략 시 전체)
 }
 
 export const useStore = create<State>()(
@@ -76,7 +81,7 @@ export const useStore = create<State>()(
 
       setAllData: (data) => set({
         assets: data.assets,
-        transactions: data.transactions
+        transactions: normalizeTransactions(data.transactions)
       }),
 
       getTotalAssets: () => {
@@ -96,19 +101,34 @@ export const useStore = create<State>()(
         return assetsTotal + transactionsTotal;
       },
 
-      getImpulseRatio: () => {
+      getImpulseRatio: (periodPrefix) => {
         const { transactions } = get();
-        const expenses = transactions.filter(t => t.type === 'EXPENSE');
+        const scoped = periodPrefix
+          ? transactions.filter(t => t.date.startsWith(periodPrefix))
+          : transactions;
+        const expenses = scoped.filter(t => t.type === 'EXPENSE');
         if (expenses.length === 0) return 0;
         
         const totalExpense = expenses.reduce((acc, t) => acc + t.amount, 0);
         const impulseExpense = expenses.filter(t => t.isImpulse).reduce((acc, t) => acc + t.amount, 0);
         
-        return (impulseExpense / totalExpense) * 100;
+        return totalExpense > 0 ? (impulseExpense / totalExpense) * 100 : 0;
       }
     }),
     {
       name: 'lovely-ledger-v2',
+      version: 1,
+      // 이전 저장소(version 0)의 소문자 타입을 한 번 정리한다
+      migrate: (persisted, version) => {
+        const state = persisted as { assets?: Asset[]; transactions?: Transaction[] };
+        if (version < 1 && state?.transactions) {
+          return {
+            ...state,
+            transactions: normalizeTransactions(state.transactions),
+          } as State;
+        }
+        return state as unknown as State;
+      },
     }
   )
 );

@@ -1,4 +1,3 @@
-import React from 'react';
 import { X, CalendarClock, TrendingDown, TrendingUp } from 'lucide-react';
 
 interface DateActionMenuProps {

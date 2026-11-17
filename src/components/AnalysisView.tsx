@@ -1,12 +1,13 @@
 import { useState, useMemo } from 'react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, AreaChart, Area } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, AreaChart, Area, CartesianGrid, XAxis, YAxis } from 'recharts';
 import { useStore } from '../store/useStore';
-import { formatCurrency } from '../lib/utils';
+import { formatCurrency, isExpense } from '../lib/utils';
 import { ImpulseCharacter } from './ImpulseCharacter';
 import { subMonths, format, addMonths, subYears, addYears } from 'date-fns';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
-const COLORS = ['#FF8042', '#00C49F', '#FFBB28', '#0088FE', '#8884d8', '#FF8042'];
+// 카테고리 랭킹용 파스텔 팔레트 (핑크 카드 톤에 맞춤)
+const COLORS = ['#FB7185', '#FBBF24', '#60A5FA', '#34D399', '#A78BFA'];
 
 const NATURE_LABELS: Record<string, string> = {
   LIVING: '생활비 (계획)',
@@ -53,10 +54,8 @@ export const AnalysisView = () => {
 
   // 데이터 필터링 및 가공
   const stats = useMemo(() => {
-    // 대소문자 구분 없이 EXPENSE 필터링
     const filtered = transactions.filter(t => 
-      t.date.startsWith(currentKey) && 
-      (t.type === 'EXPENSE' || t.type === 'expense')
+      t.date.startsWith(currentKey) && isExpense(t)
     );
     const total = filtered.reduce((acc, t) => acc + t.amount, 0);
     
@@ -109,7 +108,7 @@ export const AnalysisView = () => {
         const monthLabel = format(targetDate, 'M월');
         
         const monthlySum = transactions
-          .filter(t => t.date.startsWith(monthKey) && (t.type === 'EXPENSE' || t.type === 'expense'))
+          .filter(t => t.date.startsWith(monthKey) && isExpense(t))
           .reduce((acc, t) => acc + t.amount, 0);
 
         data.push({
@@ -127,7 +126,7 @@ export const AnalysisView = () => {
         const monthLabel = format(targetDate, 'M월');
 
         const monthlySum = transactions
-          .filter(t => t.date.startsWith(monthKey) && (t.type === 'EXPENSE' || t.type === 'expense'))
+          .filter(t => t.date.startsWith(monthKey) && isExpense(t))
           .reduce((acc, t) => acc + t.amount, 0);
 
         data.push({
@@ -179,7 +178,11 @@ export const AnalysisView = () => {
       </div>
 
       {/* Impulse Character Widget */}
-      <ImpulseCharacter />
+      <ImpulseCharacter
+        periodKey={currentKey}
+        periodLabel={viewMode === 'MONTH' ? `${currentDate.getMonth() + 1}월` : `${currentDate.getFullYear()}년`}
+        scopeLabel={viewMode === 'MONTH' ? '이 달' : '올해'}
+      />
 
       {/* 1. 지출 성격 분석 (Nature) - Pie Chart */}
       <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-lovely-50">
@@ -189,18 +192,22 @@ export const AnalysisView = () => {
         </h3>
         {stats.total > 0 ? (
           <div className="flex flex-col items-center">
-            <div className="h-[220px] w-full relative">
+            <div className="h-[172px] w-full relative">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={stats.natureData}
                     cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={80}
-                    paddingAngle={5}
+                    cy="92%"
+                    startAngle={180}
+                    endAngle={0}
+                    innerRadius={68}
+                    outerRadius={99}
+                    paddingAngle={2}
+                    cornerRadius={3}
                     dataKey="value"
                     stroke="none"
+                    isAnimationActive={false}
                   >
                     {stats.natureData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={NATURE_COLORS[entry.key] || '#CBD5E1'} />
@@ -212,9 +219,14 @@ export const AnalysisView = () => {
                   />
                 </PieChart>
               </ResponsiveContainer>
-              {/* Center Label */}
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <span className="text-xs font-bold text-gray-400">지출 구성</span>
+              {/* Center Label: 가장 큰 비중의 성격 */}
+              <div className="absolute inset-x-0 bottom-1 flex flex-col items-center justify-end pointer-events-none">
+                <span className="text-2xl font-extrabold text-gray-800 tabular-nums leading-none">
+                  {stats.natureData[0].percent.toFixed(0)}%
+                </span>
+                <span className="text-[11px] font-medium text-gray-400 mt-1 truncate max-w-[140px]">
+                  {stats.natureData[0].name}
+                </span>
               </div>
             </div>
 
@@ -251,37 +263,39 @@ export const AnalysisView = () => {
 
       {/* 2. 카테고리별 상세 분석 */}
       <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-lovely-50">
-        <h3 className="font-bold text-gray-800 mb-2 flex items-center gap-2">
+        <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
           <span className="w-1 h-4 bg-lavender-500 rounded-full"/>
           카테고리 랭킹
         </h3>
         
         {stats.total > 0 ? (
-          <div className="h-[250px] w-full -ml-4">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={stats.categoryData.slice(0, 5)} layout="vertical" margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f0f0f0" />
-                <XAxis type="number" hide />
-                <YAxis 
-                  dataKey="name" 
-                  type="category" 
-                  tick={{ fontSize: 11, fill: '#64748B' }} 
-                  width={60}
-                  tickLine={false}
-                  axisLine={false}
-                />
-                <Tooltip 
-                  cursor={{ fill: '#f8fafc' }}
-                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                  formatter={(value: number) => [`${formatCurrency(value)}원`, '지출']}
-                />
-                <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={20}>
-                  {stats.categoryData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+          <div className="space-y-4">
+            {stats.categoryData.slice(0, 5).map((item, index) => (
+              <div key={item.name} className="space-y-1.5">
+                <div className="flex items-baseline justify-between gap-3">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="w-5 h-5 shrink-0 rounded-full bg-gray-50 text-gray-400 text-[10px] font-bold flex items-center justify-center tabular-nums">
+                      {index + 1}
+                    </span>
+                    <span className="text-sm font-medium text-gray-700 truncate">{item.name}</span>
+                  </div>
+                  <div className="flex items-baseline gap-1.5 shrink-0">
+                    <span className="text-sm font-bold text-gray-800 tabular-nums">
+                      {formatCurrency(item.value)}
+                    </span>
+                    <span className="text-[11px] font-bold text-gray-400 tabular-nums min-w-[38px] text-right">
+                      {item.percent.toFixed(1)}%
+                    </span>
+                  </div>
+                </div>
+                <div className="h-2 bg-gray-50 rounded-full overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all"
+                    style={{ width: `${Math.max(item.percent, 2)}%`, backgroundColor: COLORS[index % COLORS.length] }}
+                  />
+                </div>
+              </div>
+            ))}
           </div>
         ) : (
           <div className="text-center text-gray-400 py-8 text-sm">
